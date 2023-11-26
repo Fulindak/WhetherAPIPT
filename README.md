@@ -52,4 +52,3 @@
 ![Gatling](img/gatling_analis.png)
 
 
-
