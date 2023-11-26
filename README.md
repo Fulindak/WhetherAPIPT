@@ -1,64 +1,51 @@
-# WhetherAPIPT
-# Gatling Template Project
+## Профили нагрузки
 
-Template project for gatling performance tests
+### Stability
+- Проверяет  стабильность работы сервиса под нагрузкой.
+
+### MaxPerformance
+- Необходимо для нахождения проблемных мест в API.
+
+Оба профиля нагрузки реализованы при помощи инструмента Gatling и настраиваются в файле `resources/simulation.conf`.
+
+---
+
+# Соглашение об уровне обслуживания (SLA) и Цели уровня обслуживания (SLO) для API 
+## SLA (Соглашение об уровне обслуживания)
+
+- Среднее время ответа на конечную точку `/cities` составит 2.5 секунду.
+- Среднее время ответа на конечную точку `/cities/{id}` составит 1 секунду.
+- Среднее время ответа на конечную точку `/Forecast` составит 2.5 секунду.
+- Среднее время ответа на конечную точку `/WeatherForecast` составит 4 секунды.
+
+## SLO (Цели уровня обслуживания)
+
+### Время ответа
+- 95% запросов к `/cities`, `/cities/{id}` и `/Forecast` должны обрабатываться в течение 1 секунды.
+- 95% запросов к `/WeatherForecast` должны обрабатываться в течение 3 секунд.
+- Не более 5% запросов должны превышать установленные времена ответа.
+
+## Емкость и производительность
+- Приложение спроектировано для обработки нагрузки до 400 запросов в секунду (rps).
+- При нормальной операционной нагрузке использование процессора должно оставаться ниже 92%.
+
+---
+
+# Результаты тестиррования
+
+ Входе тестирования было выявлены следующие проблемы:
+- Максимальное количество запросов которое может выдержать приложение составляет 400 rps/s, при такой нагрузке приложение способно отвечать  запросов корректно,при более высокой нагрузкиm начинатеся рестарт подов, а также диградация времеи ответа на запрос :
+ 
+![Графиик RPS](img/max_rps.png)
+- Быстрая деградация метода `/WeatherForecast`, который тянет за собой все остальное приложение, это связано с тем, что в приложении выполняется неоптимальный запрос к БД, который вызывает по проблемы n+1, когда 1 запрос к сущности  плодит за собой множество подзапросов к БД
+
+![WeatherForecast](img/weatherforecast_decradation.png)
+
+![БД](img/pg_p.png)
+
+- Опираясь на предыдущий пункт появляется еще одна проблема связанная с пдключениями к API, в результате чего pod не спровляются с нугрузкой, так как не могут закрыть сессию, что приводит к их рестарту и подению приложения
+
+![CPU](img/pods_cpu_us.png)
 
 
-## Project structure
 
-```
-src.test.resources - project resources
-src.test.scala.danila.mts.sre.weatherapi.cases - simple cases
-src.test.scala.danila.mts.sre.weatherapi.scenarios - common load scenarios assembled from simple cases
-src.test.scala.danila.mts.sre.weatherapi - common test configs
-```
-
-## Test configuration
-
-Pass this params to JVM using -DparamName="paramValue" AND -Dconfig.override_with_env_vars=true
-
-```
-Gatling logs:
-CONSOLE_LOGGING=ON - turn on console logging
-FILE_LOGGING=ON - turn on logging in file "target/gatling/gatling.log"
-GRAYLOG_LOGGING=ON - turn on logging in graylog
-    graylog params:
-        GRAYLOG_HOST - graylog host
-        GRAYLOG_PORT - on which port graylog input is
-        GRAYLOG_STREAM - name of graylog stream
-
-Gatling metrics in influxdb:
-GRAPHITE_HOST - influxdb with configured graphite plugin host
-GRAPHITE_PORT - see /etc/influxdb/influxdb.conf: bind-address
-INFLUX_PREFIX - see /etc/influxdb/influxdb.conf: database
-```
-
-Also you can pass all params from gatling-picatinny or use custom params
-read: https://github.com/TinkoffCreditSystems/gatling-picatinny/blob/master/README.md
-
-## Debug
-
-1. Debug test with 1 user, requires proxy on localhost:8888, eg using Fiddler or Wireshark
-
-```
-"Gatling / testOnly danila.mts.sre.weatherapi.Debug"
-```
-
-2. Run test from IDEA with breakpoints
-
-```
-danila.mts.sre.GatlingRunner
-```
-
-## Launch test
-
-```
-"Gatling / testOnly danila.mts.sre.weatherapi.MaxPerformance" - maximum performance test
-"Gatling / testOnly danila.mts.sre.weatherapi.Stability" - stability test
-```
-
-## Help
-
-telegram: @qa_load
-
-gatling docs: https://gatling.io/docs/current/general
