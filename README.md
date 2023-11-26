@@ -47,5 +47,9 @@
 
 ![CPU](img/pods_cpu_us.png)
 
+Отчет выполнения Gatling:
+
+![Gatling](img/gatling_analis.png)
+
 
 
